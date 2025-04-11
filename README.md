@@ -47,7 +47,7 @@ pip install pydicom pandas
 - Anonymized DICOM files are saved in the destination directory.
 
 ## Notes
-- IMPORTANT: Ensure the DICOM tag `Patient ID` is the same as in your `keys.csv` file. In my experience, Patient ID could be either MRN or NHS number, it depends how the DICOMs were exported. Use `pydicom.dcmread` to load a representative DICOM file and check. Modify your `keys` csv file accordingly. This won't affect the anonymisation process or the structure of the DICOM data downstream, since the `Patient ID` tag is always anonymised.
+- IMPORTANT: Ensure the DICOM tag `Patient ID` is the same as in your `keys.csv` file. In my experience, Patient ID could be either MRN or NHS number, it depends how the DICOMs were exported. Use `pydicom.dcmread()` to load a representative DICOM file and check. Modify your `keys` csv file accordingly. This won't affect the anonymisation process or the structure of the DICOM data downstream, since the `Patient ID` tag is always anonymised.
 - The script will skip files or directories that do not meet the requirements.
 
 ## Author
