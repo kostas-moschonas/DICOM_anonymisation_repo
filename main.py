@@ -18,18 +18,16 @@ import pandas as pd
 mrn_dir = "../mava_research_missing"
 
 # Destination directory (will create folder if it does not exist)
-anon_dir = "../Anonymised_research_scans/mava_missing"
+anon_dir = "../research_scans_anonymised"
 
 # CSV file with AnonID keys
-keys_df = pd.read_csv("keys/keys_mava_20250320.csv", dtype=str)
+keys_df = pd.read_csv("keys/keys_NHS_numbers.csv", dtype=str)
 
 # Name and path of metadata CSV
-extracted_metadata_path = "metadata/missing_scans_20250411.csv"
+extracted_metadata_path = "metadata/mava_anonymised_20250411.csv"
 
 # --- RUNNING CODE ---
 # 1. Export metadata from DICOM files before anonymising -------------------
-# Extract metadata
-## Create a set of valid MRNs from the key file
 # Extract metadata
 valid_mrns = set(keys_df['mrn'])
 sample_cmrs = MetadataExtraction(mrn_dir)
