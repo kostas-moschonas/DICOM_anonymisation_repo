@@ -1,4 +1,4 @@
-# DICOM Anonymisation Repository
+# DICOM Anonymisation
 
 ## Overview
 This repository provides tools for processing and anonymizing DICOM files for research purposes. It includes functionalities for extracting metadata, anonymizing sensitive information, and maintaining the original directory structure of the DICOM files.
