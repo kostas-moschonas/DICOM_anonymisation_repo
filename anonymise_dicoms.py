@@ -175,7 +175,6 @@ class Anonymisation:
             except OSError as e:
                 print(f"Error renaming: {e}")
 
-
     def anonymise_dicom_tags(self, anon_dir: str, df: pd.DataFrame):
         """Anonymises DICOM files in place within the specified directory."""
 
@@ -188,42 +187,42 @@ class Anonymisation:
 
             for root, _, files in os.walk(study_dir_path):
                 for file in files:
-                    if file.lower().endswith((".dcm", ".ima")):
-                        dcm_file_path = os.path.join(root, file)
-                        try:
-                            ds = pydicom.dcmread(dcm_file_path)
+                    dcm_file_path = os.path.join(root, file)
+                    try:
+                        ds = pydicom.dcmread(dcm_file_path)
 
-                            # Empty specified tags
-                            empty_tags = [
-                                'PatientName',
-                                'PatientBirthDate',
-                                'PatientID',
-                                'PhysicianOfRecord',
-                                'PhysiciansOfRecord',
-                                'RequestingPhysician',
-                                'PerformingPhysicianName',
-                                'OperatorName',
-                                'OperatorsName',
-                                'InstitutionAddress',
-                                'ReferringPhysicianName',
-                                'OtherPatientIDs',
-                                'ReferencedStudySequence',
-                                'StudyID',
-                                'PatientTelephoneNumber',
-                                'InstitutionName'
-                            ]
-                            for tag_name in empty_tags:
-                                if tag_name in ds:
-                                    ds.data_element(tag_name).value = ''
+                        # Empty specified tags
+                        empty_tags = [
+                            'PatientName',
+                            'PatientBirthDate',
+                            'PatientID',
+                            'PhysicianOfRecord',
+                            'PhysiciansOfRecord',
+                            'RequestingPhysician',
+                            'PerformingPhysicianName',
+                            'OperatorName',
+                            'OperatorsName',
+                            'InstitutionAddress',
+                            'ReferringPhysicianName',
+                            'OtherPatientIDs',
+                            'ReferencedStudySequence',
+                            'StudyID',
+                            'PatientTelephoneNumber',
+                            'InstitutionName'
+                        ]
+                        for tag_name in empty_tags:
+                            if tag_name in ds:
+                                ds.data_element(tag_name).value = ''
 
-                            # Replace PatientName and PatientID
-                            ds.PatientName = str(row['AnonID'])
-                            ds.PatientID = str(row['AnonID'])
+                        # Replace PatientName and PatientID
+                        ds.PatientName = str(row['AnonID'])
+                        ds.PatientID = str(row['AnonID'])
 
-                            ds.save_as(dcm_file_path)
-                            print(f"Anonymized: {dcm_file_path}")
+                        ds.save_as(dcm_file_path)
+                        print(f"Anonymized: {dcm_file_path}")
 
-                        except Exception as e:
-                            print(f"Error anonymizing {dcm_file_path}: {e}")
-                            return False  # Stop on error
+                    except Exception as e:
+                        print(f"Error anonymizing {dcm_file_path}: {e}")
+                        return False  # Stop on error
+
         return True
