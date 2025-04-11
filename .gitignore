@@ -1,3 +1,5 @@
 # Ignore the keys and metadata folders
 keys/
 metadata/
+test.py
+test2.py
