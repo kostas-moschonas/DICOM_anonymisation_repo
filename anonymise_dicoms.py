@@ -217,51 +217,51 @@ class Anonymisation:
                 elem.value = tag_replacements[elem.keyword]
 
     def anonymise_dicom_tags(self, anon_dir: str, df: pd.DataFrame):
-            """
-            Anonymizes DICOM files in place within the specified directory.
+        """
+        Anonymizes DICOM files in place within the specified directory.
 
-            Args:
-                anon_dir (str): Path to the directory containing anonymized DICOM files.
-                df (pd.DataFrame): DataFrame containing metadata and anonymization mappings.
-            """
-            for _, row in df.iterrows():
-                study_dir_path = os.path.join(anon_dir, f"{row['AnonID']}_{row['formatted_date']}")
+        Args:
+            anon_dir (str): Path to the directory containing anonymized DICOM files.
+            df (pd.DataFrame): DataFrame containing metadata and anonymization mappings.
+        """
+        for _, row in df.iterrows():
+            study_dir_path = os.path.join(anon_dir, f"{row['AnonID']}_{row['formatted_date']}")
 
-                if not os.path.exists(study_dir_path):
-                    print(f"Warning: Directory not found: {study_dir_path}")
-                    continue
+            if not os.path.exists(study_dir_path):
+                print(f"Warning: Directory not found: {study_dir_path}")
+                continue
 
-                for root, _, files in os.walk(study_dir_path):
-                    for file in files:
-                        dcm_file_path = os.path.join(root, file)
-                        try:
-                            ds = pydicom.dcmread(dcm_file_path)
+            for root, _, files in os.walk(study_dir_path):
+                for file in files:
+                    dcm_file_path = os.path.join(root, file)
+                    try:
+                        ds = pydicom.dcmread(dcm_file_path)
 
-                            # Define replacements for anonymization
-                            tag_replacements = {
-                                'PatientName': str(row['AnonID']),
-                                'PatientID': str(row['AnonID']),
-                            }
+                        # Define replacements for anonymization
+                        tag_replacements = {
+                            'PatientName': str(row['AnonID']),
+                            'PatientID': str(row['AnonID']),
+                        }
 
-                            # Empty other sensitive tags
-                            empty_tags = [
-                                'PatientBirthDate', 'PhysicianOfRecord', 'PhysiciansOfRecord',
-                                'RequestingPhysician', 'PerformingPhysicianName', 'OperatorName',
-                                'OperatorsName', 'InstitutionAddress', 'ReferringPhysicianName',
-                                'OtherPatientIDs', 'ReferencedStudySequence', 'StudyID',
-                                'PatientTelephoneNumber', 'InstitutionName'
-                            ]
-                            for tag_name in empty_tags:
-                                tag_replacements[tag_name] = ''
+                        # Empty other sensitive tags
+                        empty_tags = [
+                            'PatientBirthDate', 'PhysicianOfRecord', 'PhysiciansOfRecord',
+                            'RequestingPhysician', 'PerformingPhysicianName', 'OperatorName',
+                            'OperatorsName', 'InstitutionAddress', 'ReferringPhysicianName',
+                            'OtherPatientIDs', 'ReferencedStudySequence', 'StudyID',
+                            'PatientTelephoneNumber', 'InstitutionName'
+                        ]
+                        for tag_name in empty_tags:
+                            tag_replacements[tag_name] = ''
 
-                            # Anonymize tags recursively
-                            self._anonymize_tags(ds, tag_replacements)
+                        # Anonymize tags recursively
+                        self._anonymize_tags(ds, tag_replacements)
 
-                            ds.save_as(dcm_file_path)
-                            print(f"Anonymized: {dcm_file_path}")
+                        ds.save_as(dcm_file_path)
+                        print(f"Anonymized: {dcm_file_path}")
 
-                        except Exception as e:
-                            print(f"Error anonymizing {dcm_file_path}: {e}")
-                            return False  # Stop on error
+                    except Exception as e:
+                        print(f"Error anonymizing {dcm_file_path}: {e}")
+                        return False  # Stop on error
 
-            return True
+        return True
