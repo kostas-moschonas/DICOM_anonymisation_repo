@@ -39,36 +39,62 @@ class MetadataExtraction:
         self.root_directory = root_directory
         self.metadata = None
 
+    def _find_all_tags(self, dataset, tag_keyword):
+        """
+        Recursively find all occurrences of a specified tag in a DICOM dataset.
+
+        Args:
+            dataset (pydicom.dataset.Dataset): The DICOM dataset to search.
+            tag_keyword (str): The DICOM tag keyword to search for.
+
+        Returns:
+            list: A list of all values found for the specified tag.
+        """
+        values = []
+        for elem in dataset:
+            if elem.VR == "SQ":  # If the element is a sequence, recurse into it
+                for item in elem.value:
+                    values.extend(self._find_all_tags(item, tag_keyword))  # Use self._find_all_tags
+            elif elem.keyword == tag_keyword:  # Check if the tag matches
+                values.append(elem.value)
+        return values
+
     def _extract_metadata_from_dicom(self, filepath: str, valid_mrns: set) -> Dict:
-                        try:
-                            dcm = pydicom.dcmread(filepath)
-                            patient_ids = dcm.get('PatientID', 'NA')
+                """
+                Extract metadata from a DICOM file, including handling nested PatientID tags.
 
-                            # Handle multiple PatientIDs
-                            if isinstance(patient_ids, list):
-                                for patient_id in patient_ids:
-                                    if patient_id in valid_mrns:
-                                        correct_patient_id = patient_id
-                                        break
-                                else:
-                                    correct_patient_id = 'NA'  # No match found
-                            else:
-                                correct_patient_id = patient_ids if patient_ids in valid_mrns else 'NA'
+                Args:
+                    filepath (str): Path to the DICOM file.
+                    valid_mrns (set): Set of valid MRNs to match against.
 
-                            return {
-                                'mrn': correct_patient_id,
-                                'dob': dcm.get('PatientBirthDate', 'NA'),
-                                'sex': dcm.get('PatientSex', 'NA'),
-                                'date': dcm.get('StudyDate', 'NA'),
-                                'time': dcm.get('StudyTime', 'NA'),
-                                'height': dcm.get('PatientSize', 'NA'),
-                                'weight': dcm.get('PatientWeight', 'NA'),
-                                'scanner_id': dcm.get('DeviceSerialNumber', 'NA'),
-                                'StudyInstanceUID': dcm.get('StudyInstanceUID', 'NA'),
-                            }
-                        except (pydicom.errors.InvalidDicomError, Exception) as e:
-                            print(f"Error reading DICOM {filepath}: {e}")
-                            return None
+                Returns:
+                    Dict: Extracted metadata or None if an error occurs.
+                """
+                try:
+                    dcm = pydicom.dcmread(filepath)
+                    patient_ids = self._find_all_tags(dcm, "PatientID")  # Use self._find_all_tags
+
+                    # Match the correct MRN
+                    correct_patient_id = 'NA'
+                    for patient_id in patient_ids:
+                        if patient_id in valid_mrns:
+                            correct_patient_id = patient_id
+                            break
+
+                    return {
+                        'mrn': correct_patient_id,
+                        'dob': dcm.get('PatientBirthDate', 'NA'),
+                        'sex': dcm.get('PatientSex', 'NA'),
+                        'date': dcm.get('StudyDate', 'NA'),
+                        'time': dcm.get('StudyTime', 'NA'),
+                        'height': dcm.get('PatientSize', 'NA'),
+                        'weight': dcm.get('PatientWeight', 'NA'),
+                        'scanner_id': dcm.get('DeviceSerialNumber', 'NA'),
+                        'StudyInstanceUID': dcm.get('StudyInstanceUID', 'NA'),
+                    }
+                except (pydicom.errors.InvalidDicomError, Exception) as e:
+                    print(f"Error reading DICOM {filepath}: {e}")
+                    return None
 
     def extract_metadata(self, valid_mrns: set) -> pd.DataFrame:
                         study_dir_names = []
@@ -175,54 +201,67 @@ class Anonymisation:
             except OSError as e:
                 print(f"Error renaming: {e}")
 
+    def _anonymize_tags(self, dataset, tag_replacements):
+        """
+        Recursively anonymize specified tags in a DICOM dataset.
+
+        Args:
+            dataset (pydicom.dataset.Dataset): The DICOM dataset to anonymize.
+            tag_replacements (dict): A dictionary of tag keywords and their replacement values.
+        """
+        for elem in dataset:
+            if elem.VR == "SQ":  # If the element is a sequence, recurse into it
+                for item in elem.value:
+                    self._anonymize_tags(item, tag_replacements)  # Use self._anonymize_tags
+            elif elem.keyword in tag_replacements:  # Check if the tag matches
+                elem.value = tag_replacements[elem.keyword]
+
     def anonymise_dicom_tags(self, anon_dir: str, df: pd.DataFrame):
-        """Anonymises DICOM files in place within the specified directory."""
+            """
+            Anonymizes DICOM files in place within the specified directory.
 
-        for _, row in df.iterrows():
-            study_dir_path = os.path.join(anon_dir, f"{row['AnonID']}_{row['formatted_date']}")
+            Args:
+                anon_dir (str): Path to the directory containing anonymized DICOM files.
+                df (pd.DataFrame): DataFrame containing metadata and anonymization mappings.
+            """
+            for _, row in df.iterrows():
+                study_dir_path = os.path.join(anon_dir, f"{row['AnonID']}_{row['formatted_date']}")
 
-            if not os.path.exists(study_dir_path):
-                print(f"Warning: Directory not found: {study_dir_path}")
-                continue
+                if not os.path.exists(study_dir_path):
+                    print(f"Warning: Directory not found: {study_dir_path}")
+                    continue
 
-            for root, _, files in os.walk(study_dir_path):
-                for file in files:
-                    dcm_file_path = os.path.join(root, file)
-                    try:
-                        ds = pydicom.dcmread(dcm_file_path)
+                for root, _, files in os.walk(study_dir_path):
+                    for file in files:
+                        dcm_file_path = os.path.join(root, file)
+                        try:
+                            ds = pydicom.dcmread(dcm_file_path)
 
-                        # Empty specified tags
-                        empty_tags = [
-                            'PatientName',
-                            'PatientBirthDate',
-                            'PatientID',
-                            'PhysicianOfRecord',
-                            'PhysiciansOfRecord',
-                            'RequestingPhysician',
-                            'PerformingPhysicianName',
-                            'OperatorName',
-                            'OperatorsName',
-                            'InstitutionAddress',
-                            'ReferringPhysicianName',
-                            'OtherPatientIDs',
-                            'ReferencedStudySequence',
-                            'StudyID',
-                            'PatientTelephoneNumber',
-                            'InstitutionName'
-                        ]
-                        for tag_name in empty_tags:
-                            if tag_name in ds:
-                                ds.data_element(tag_name).value = ''
+                            # Define replacements for anonymization
+                            tag_replacements = {
+                                'PatientName': str(row['AnonID']),
+                                'PatientID': str(row['AnonID']),
+                            }
 
-                        # Replace PatientName and PatientID
-                        ds.PatientName = str(row['AnonID'])
-                        ds.PatientID = str(row['AnonID'])
+                            # Empty other sensitive tags
+                            empty_tags = [
+                                'PatientBirthDate', 'PhysicianOfRecord', 'PhysiciansOfRecord',
+                                'RequestingPhysician', 'PerformingPhysicianName', 'OperatorName',
+                                'OperatorsName', 'InstitutionAddress', 'ReferringPhysicianName',
+                                'OtherPatientIDs', 'ReferencedStudySequence', 'StudyID',
+                                'PatientTelephoneNumber', 'InstitutionName'
+                            ]
+                            for tag_name in empty_tags:
+                                tag_replacements[tag_name] = ''
 
-                        ds.save_as(dcm_file_path)
-                        print(f"Anonymized: {dcm_file_path}")
+                            # Anonymize tags recursively
+                            self._anonymize_tags(ds, tag_replacements)
 
-                    except Exception as e:
-                        print(f"Error anonymizing {dcm_file_path}: {e}")
-                        return False  # Stop on error
+                            ds.save_as(dcm_file_path)
+                            print(f"Anonymized: {dcm_file_path}")
 
-        return True
+                        except Exception as e:
+                            print(f"Error anonymizing {dcm_file_path}: {e}")
+                            return False  # Stop on error
+
+            return True
