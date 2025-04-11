@@ -1,3 +1,15 @@
+"""
+Main script for extracting metadata and anonymizing DICOM files.
+
+Steps:
+1. Extract metadata from DICOM files and save it to a CSV.
+2. Copy and rename directories for anonymization.
+3. Anonymize sensitive DICOM tags in-place.
+
+Author: Kostas Moschonas
+Date: 11-04-2025
+"""
+
 from anonymise_dicoms import MetadataExtraction, Anonymisation
 import pandas as pd
 

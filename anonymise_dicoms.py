@@ -1,88 +1,20 @@
 """
-DICOM Anonymization Script
-def extract_metadata(self) -> pd.DataFrame:
-    study_dir_names = []
-    mrn, dob, sex, date, time, height, weight = [], [], [], [], [], [], []
-    scanner_id, study_instance_uids, file_paths = [], [], []
+This script processes and anonymizes DICOM files for research purposes. It includes the following functionalities:
 
-    for study_dir in next(os.walk(self.root_directory))[1]:
-        study_path = os.path.join(self.root_directory, study_dir)
-        for root, _, files in os.walk(study_path):
-            for file in files:
-                if file.lower().endswith((".dcm", ".ima")):
-                    filepath = os.path.join(root, file)
-                    dicom_metadata = self._extract_metadata_from_dicom(filepath)
-                    if dicom_metadata is None:
-                        continue
+1. Metadata Extraction:
+   - Extracts metadata from DICOM files in a directory structure.
+   - Filters metadata based on valid MRNs and saves it to a CSV file.
 
-                    study_dir_names.append(study_dir)
-                    mrn.append(dicom_metadata['mrn'])
-                    dob.append(dicom_metadata['dob'])
-                    sex.append(dicom_metadata['sex'])
-                    date.append(dicom_metadata['date'])
-                    time.append(dicom_metadata['time'])
-                    height.append(dicom_metadata['height'])
-                    weight.append(dicom_metadata['weight'])
-                    scanner_id.append(dicom_metadata['scanner_id'])
-                    study_instance_uids.append(dicom_metadata['StudyInstanceUID'])
-                    file_paths.append(filepath)
+2. Anonymization:
+   - Copies and renames directories based on anonymized IDs and formatted dates.
+   - Anonymizes sensitive DICOM tags in-place while preserving the directory structure.
 
-    df = pd.DataFrame({
-        'AnonID': [''] * len(study_dir_names),
-        'StudyDirName': study_dir_names,
-        'mrn': mrn, 'dob': dob, 'sex': sex, 'date': date,
-        'time': time, 'StudyInstanceUID': study_instance_uids,
-        'height': height, 'weight': weight, 'scanner_id': scanner_id,
-        'FilePath': file_paths,
-    })
-    self.metadata = self._convert_column_formats(df)
-    return self.metadata
-This script extracts metadata from DICOM files in a specified directory structure,
-creates an anonymized copy of the directory, and anonymizes the DICOM files
-in place within the copied directory.
+Modules:
+- `MetadataExtraction`: Handles metadata extraction from DICOM files.
+- `Anonymisation`: Manages directory renaming and DICOM tag anonymization.
 
-Functionality:
-
-- `MetadataExtraction`: Extracts metadata from DICOM files and stores it in a Pandas DataFrame.
-- `Anonymisation`:  Handles the creation of the anonymized directory structure and the in-place anonymization of DICOM files.
-
-Usage:
-
-1.  Modify the `mrn_dir` and `anon_dir` variables in the
-    `if __name__ == '__main__':` block to point to your source and
-    destination directories, respectively.
-2.  Provide your own logic for generating and assigning `AnonID` values
-    to the DataFrame. The example code provides a very basic placeholder
-    that you *must* replace.
-
-Assumptions:
-
-1. The input directory structure is:
-    `root_directory/study_directory/subfolder/dicom_file.dcm`
-  Where `root_directory` is the `mrn_dir` you specify.
-2. DICOM files have the extensions `.dcm` or `.ima`.
-
-Example:
-
-```python
-# (Simplified example - see full code for details)
-from your_script_name import MetadataExtraction, Anonymisation  # Assuming you save as your_script_name.py
-
-mrn_dir = "cmrs"
-anon_dir = "cmrs_anon"
-
-sample_cmr_folder = MetadataExtraction(mrn_dir)
-metadata_df = sample_cmr_folder.extract_metadata()
-sample_cmr_folder.save_metadata_to_csv()
-
-metadata_df['AnonID'] = ... # REPLACE WITH YOUR ANONYMIZATION ID LOGIC
-
-anonymiser = Anonymisation()
-anonymiser.create_and_restructure_anon_dir(mrn_dir, anon_dir, metadata_df)
-anonymiser.anonymize_dicom_directory_in_place(anon_dir, metadata_df)
-
-By: Kostas Moschonas
-20/03/2025
+Author: Kostas Moschonas
+Date: 11-04-2025
 """
 
 import pydicom
