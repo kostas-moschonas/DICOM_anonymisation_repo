@@ -60,91 +60,91 @@ class MetadataExtraction:
         return values
 
     def _extract_metadata_from_dicom(self, filepath: str, valid_mrns: set) -> Dict:
-                """
-                Extract metadata from a DICOM file, including handling nested PatientID tags.
+        """
+        Extract metadata from a DICOM file, including handling nested PatientID tags.
 
-                Args:
-                    filepath (str): Path to the DICOM file.
-                    valid_mrns (set): Set of valid MRNs to match against.
+        Args:
+            filepath (str): Path to the DICOM file.
+            valid_mrns (set): Set of valid MRNs to match against.
 
-                Returns:
-                    Dict: Extracted metadata or None if an error occurs.
-                """
-                try:
-                    dcm = pydicom.dcmread(filepath)
-                    patient_ids = self._find_all_tags(dcm, "PatientID")  # Use self._find_all_tags
+        Returns:
+            Dict: Extracted metadata or None if an error occurs.
+        """
+        try:
+            dcm = pydicom.dcmread(filepath)
+            patient_ids = self._find_all_tags(dcm, "PatientID")  # Use self._find_all_tags
 
-                    # Match the correct MRN
-                    correct_patient_id = 'NA'
-                    for patient_id in patient_ids:
-                        if patient_id in valid_mrns:
-                            correct_patient_id = patient_id
-                            break
+            # Match the correct MRN
+            correct_patient_id = 'NA'
+            for patient_id in patient_ids:
+                if patient_id in valid_mrns:
+                    correct_patient_id = patient_id
+                    break
 
-                    return {
-                        'mrn': correct_patient_id,
-                        'dob': dcm.get('PatientBirthDate', 'NA'),
-                        'sex': dcm.get('PatientSex', 'NA'),
-                        'date': dcm.get('StudyDate', 'NA'),
-                        'time': dcm.get('StudyTime', 'NA'),
-                        'height': dcm.get('PatientSize', 'NA'),
-                        'weight': dcm.get('PatientWeight', 'NA'),
-                        'scanner_id': dcm.get('DeviceSerialNumber', 'NA'),
-                        'StudyInstanceUID': dcm.get('StudyInstanceUID', 'NA'),
-                    }
-                except (pydicom.errors.InvalidDicomError, Exception) as e:
-                    print(f"Error reading DICOM {filepath}: {e}")
-                    return None
+            return {
+                'mrn': correct_patient_id,
+                'dob': dcm.get('PatientBirthDate', 'NA'),
+                'sex': dcm.get('PatientSex', 'NA'),
+                'date': dcm.get('StudyDate', 'NA'),
+                'time': dcm.get('StudyTime', 'NA'),
+                'height': dcm.get('PatientSize', 'NA'),
+                'weight': dcm.get('PatientWeight', 'NA'),
+                'scanner_id': dcm.get('DeviceSerialNumber', 'NA'),
+                'StudyInstanceUID': dcm.get('StudyInstanceUID', 'NA'),
+            }
+        except (pydicom.errors.InvalidDicomError, Exception) as e:
+            print(f"Error reading DICOM {filepath}: {e}")
+            return None
 
     def extract_metadata(self, valid_mrns: set) -> pd.DataFrame:
-                        study_dir_names = []
-                        mrn, dob, sex, date, time, height, weight = [], [], [], [], [], [], []
-                        scanner_id, study_instance_uids, file_paths = [], [], []
+        study_dir_names = []
+        mrn, dob, sex, date, time, height, weight = [], [], [], [], [], [], []
+        scanner_id, study_instance_uids, file_paths = [], [], []
 
-                        for study_dir in next(os.walk(self.root_directory))[1]:
-                            study_path = os.path.join(self.root_directory, study_dir)
-                            try:
-                                # Check for subdirectories
-                                sub_dirs = next(os.walk(study_path))[1]
-                                if sub_dirs:
-                                    # Process the first file in the first subdirectory
-                                    first_sub_dir = sub_dirs[0]
-                                    first_file = next(os.walk(os.path.join(study_path, first_sub_dir)))[2][0]
-                                    filepath = os.path.join(study_path, first_sub_dir, first_file)
-                                else:
-                                    # Process the first DICOM file directly in the study directory
-                                    first_file = next(os.walk(study_path))[2][0]
-                                    filepath = os.path.join(study_path, first_file)
-                            except (IndexError, StopIteration):
-                                print(f"Skipping directory (no files): {study_path}")
-                                continue
+        for study_dir in next(os.walk(self.root_directory))[1]:
+            study_path = os.path.join(self.root_directory, study_dir)
+            try:
+                # Check for subdirectories
+                sub_dirs = next(os.walk(study_path))[1]
+                if sub_dirs:
+                    # Process the first file in the first subdirectory
+                    first_sub_dir = sub_dirs[0]
+                    first_file = next(os.walk(os.path.join(study_path, first_sub_dir)))[2][0]
+                    filepath = os.path.join(study_path, first_sub_dir, first_file)
+                else:
+                    # Process the first DICOM file directly in the study directory
+                    first_file = next(os.walk(study_path))[2][0]
+                    filepath = os.path.join(study_path, first_file)
+            except (IndexError, StopIteration):
+                print(f"Skipping directory (no files): {study_path}")
+                continue
 
-                            dicom_metadata = self._extract_metadata_from_dicom(filepath, valid_mrns)
-                            if dicom_metadata is None:
-                                continue
+            dicom_metadata = self._extract_metadata_from_dicom(filepath, valid_mrns)
+            if dicom_metadata is None:
+                continue
 
-                            study_dir_names.append(study_dir)
-                            mrn.append(dicom_metadata['mrn'])
-                            dob.append(dicom_metadata['dob'])
-                            sex.append(dicom_metadata['sex'])
-                            date.append(dicom_metadata['date'])
-                            time.append(dicom_metadata['time'])
-                            height.append(dicom_metadata['height'])
-                            weight.append(dicom_metadata['weight'])
-                            scanner_id.append(dicom_metadata['scanner_id'])
-                            study_instance_uids.append(dicom_metadata['StudyInstanceUID'])
-                            file_paths.append(filepath)
+            study_dir_names.append(study_dir)
+            mrn.append(dicom_metadata['mrn'])
+            dob.append(dicom_metadata['dob'])
+            sex.append(dicom_metadata['sex'])
+            date.append(dicom_metadata['date'])
+            time.append(dicom_metadata['time'])
+            height.append(dicom_metadata['height'])
+            weight.append(dicom_metadata['weight'])
+            scanner_id.append(dicom_metadata['scanner_id'])
+            study_instance_uids.append(dicom_metadata['StudyInstanceUID'])
+            file_paths.append(filepath)
 
-                        df = pd.DataFrame({
-                            'AnonID': [''] * len(study_dir_names),
-                            'StudyDirName': study_dir_names,
-                            'mrn': mrn, 'dob': dob, 'sex': sex, 'date': date,
-                            'time': time, 'StudyInstanceUID': study_instance_uids,
-                            'height': height, 'weight': weight, 'scanner_id': scanner_id,
-                            'FilePath': file_paths,
-                        })
-                        self.metadata = self._convert_column_formats(df)
-                        return self.metadata
+        df = pd.DataFrame({
+            'AnonID': [''] * len(study_dir_names),
+            'StudyDirName': study_dir_names,
+            'mrn': mrn, 'dob': dob, 'sex': sex, 'date': date,
+            'time': time, 'StudyInstanceUID': study_instance_uids,
+            'height': height, 'weight': weight, 'scanner_id': scanner_id,
+            'FilePath': file_paths,
+        })
+        self.metadata = self._convert_column_formats(df)
+        return self.metadata
 
     def _convert_column_formats(self, df: pd.DataFrame) -> pd.DataFrame:
         str_cols = ['StudyDirName', 'mrn', 'sex', 'StudyInstanceUID', 'FilePath']
