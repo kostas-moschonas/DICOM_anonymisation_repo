@@ -216,6 +216,7 @@ class Anonymisation:
             elif elem.keyword in tag_replacements:  # Check if the tag matches
                 elem.value = tag_replacements[elem.keyword]
 
+
     def anonymise_dicom_tags(self, anon_dir: str, df: pd.DataFrame):
         """
         Anonymizes DICOM files in place within the specified directory.
@@ -235,7 +236,7 @@ class Anonymisation:
                 for file in files:
                     dcm_file_path = os.path.join(root, file)
                     try:
-                        ds = pydicom.dcmread(dcm_file_path)
+                        ds = pydicom.dcmread(dcm_file_path, force=True)
 
                         # Define replacements for anonymization
                         tag_replacements = {
@@ -260,6 +261,9 @@ class Anonymisation:
                         ds.save_as(dcm_file_path)
                         print(f"Anonymized: {dcm_file_path}")
 
+                    except pydicom.errors.InvalidDicomError:
+                        # Not a DICOM file, skip
+                        continue
                     except Exception as e:
                         print(f"Error anonymizing {dcm_file_path}: {e}")
                         return False  # Stop on error
