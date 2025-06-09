@@ -16,16 +16,16 @@ import os
 
 # --- USER DEFINED VARIABLES ---
 # Source directory
-mrn_dir = "E:/mava_to_anonymise"
+mrn_dir = "E:/ApHCM_Beckys_list/ApHCM/unzipped_full_names"
 
 # Destination directory (will create folder if it does not exist)
-anon_dir = "E:/research_scans_anonymised/extract_metadata_for_BTEX/troubleshoot"
+anon_dir = "E:/research_scans_anonymised/ApHCM_Becky_simple_anonymisation"
 
 # CSV file with AnonID keys
-keys_df = pd.read_csv("keys/keys_mava.csv", dtype=str)
+keys_df = pd.read_csv("keys/ApHCM_simple_keys.csv", dtype=str)
 
 # Name and path of metadata CSV
-extracted_metadata_path = "metadata/mava_anonymised_20250606.csv"
+extracted_metadata_path = "metadata/mava_anonymised_ApHCM_simple_keys.csv"
 
 # --- RUNNING CODE ---
 # 1. Export metadata from DICOM files before anonymizing -------------------
