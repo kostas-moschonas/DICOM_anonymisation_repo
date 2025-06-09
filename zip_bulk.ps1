@@ -1,17 +1,19 @@
-# PowerShell script to zip each folder in a directory individually
-$sourceDir = "E:\unzipped_folders"  # Path to the directory containing folders to zip
-$destinationDir = "E:\zipped_folders"  # Path to save the zipped files
+# PowerShell script to zip each folder inside a directory
+$sourceDir = "E:\research_scans_anonymised\ApHCM_Becky_simple_anonymisation"
+$destinationDir = "E:\research_scans_anonymised\ApHCM_Becky_zipped"
 
 # Ensure the destination directory exists
-if (!(Test-Path -Path $destinationDir)) {
+if (-not (Test-Path -Path $destinationDir)) {
     New-Item -ItemType Directory -Path $destinationDir
 }
 
-# Compress each folder in the source directory
+# Get all folders in the source directory
 Get-ChildItem -Path $sourceDir -Directory | ForEach-Object {
     $folderName = $_.Name
     $zipPath = Join-Path -Path $destinationDir -ChildPath "$folderName.zip"
+
+    # Create a zip file for the folder
     Compress-Archive -Path $_.FullName -DestinationPath $zipPath
 }
 
-Write-Host "All folders in $sourceDir have been zipped to $destinationDir."
+Write-Host "All folders have been zipped into $destinationDir."
