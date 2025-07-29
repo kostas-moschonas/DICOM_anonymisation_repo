@@ -11,23 +11,28 @@ Date: 11-04-2025
 """
 
 from anonymise_dicoms import MetadataExtraction, Anonymisation
+from unzip import ZipFolderHandler
 import pandas as pd
 import os
 
 # --- USER DEFINED VARIABLES ---
 # Source directory
-mrn_dir = "E:/ApHCM_Beckys_list/ApHCM/unzipped_full_names"
+mrn_dir = r"E:\ApHCM_main\main_list_NOT_anonymised"
 
 # Destination directory (will create folder if it does not exist)
-anon_dir = "E:/research_scans_anonymised/ApHCM_Becky_simple_anonymisation"
+anon_dir = r"E:\ApHCM_main\main_list"
 
 # CSV file with AnonID keys
-keys_df = pd.read_csv("keys/ApHCM_simple_keys.csv", dtype=str)
+keys_df = pd.read_csv("keys/keys_ApHCM.csv", dtype=str)
 
 # Name and path of metadata CSV
-extracted_metadata_path = "metadata/mava_anonymised_ApHCM_simple_keys.csv"
+extracted_metadata_path = "metadata/ApHCM_all.csv"
 
 # --- RUNNING CODE ---
+# IF NEEDED,
+zip_handler = ZipFolderHandler(mrn_dir, anon_dir)
+zip_handler.process_all_zipped_folders()
+
 # 1. Export metadata from DICOM files before anonymizing -------------------
 # Extract metadata
 valid_mrns = set(keys_df['mrn'])
@@ -44,8 +49,11 @@ print(f"Metadata saved to {extracted_metadata_path}")
 # 2. Anonymize DICOM data -------------------
 anonymiser = Anonymisation()
 
-# Copy and rename folders
-anonymiser.copy_directory_and_rename_mainfolders(mrn_dir, anon_dir, metadata_df)
+# Copy directory, uncomment if used zip class above and files are already copied
+# anonymiser.copy_directory(mrn_dir, anon_dir)
+
+# Rename main folders
+anonymiser.rename_mainfolders(anon_dir, metadata_df)
 
 # Anonymize DICOM tags in place
 if anonymiser.anonymise_dicom_tags(anon_dir, metadata_df):

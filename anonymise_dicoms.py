@@ -172,20 +172,22 @@ class Anonymisation:
     and in-place DICOM tag modification.
     """
 
-    def copy_directory_and_rename_mainfolders(self, mrn_dir: str, anon_dir: str, df: pd.DataFrame):
-        """Copies and renames directories for anonymisation."""
+    def copy_directory(self, source_dir: str, destination_dir: str):
+        """Copies the entire directory structure from source to destination."""
+        if not os.path.exists(destination_dir):
+            os.makedirs(destination_dir)
 
-        if not os.path.exists(anon_dir):
-            os.makedirs(anon_dir)
+        for item in os.listdir(source_dir):
+            source_path = os.path.join(source_dir, item)
+            destination_path = os.path.join(destination_dir, item)
+            if os.path.isdir(source_path):
+                shutil.copytree(source_path, destination_path, dirs_exist_ok=True)
+            else:
+                shutil.copy2(source_path, destination_path)
 
-        # Copy entire mrn_dir to anon_dir
-        for item in os.listdir(mrn_dir):
-            s = os.path.join(mrn_dir, item)
-            d = os.path.join(anon_dir, item)
-            if os.path.isdir(s):
-                shutil.copytree(s, d, dirs_exist_ok=True)
 
-        # Iterate and rename
+    def rename_mainfolders(self, anon_dir: str, df: pd.DataFrame):
+        """Renames directories in the anonymized directory based on the DataFrame."""
         for _, row in df.iterrows():
             old_dir_name = os.path.basename(str(row['StudyDirName']))
             old_dir_path = os.path.join(anon_dir, old_dir_name)
