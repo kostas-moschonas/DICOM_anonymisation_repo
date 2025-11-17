@@ -17,21 +17,21 @@ import os
 
 # --- USER DEFINED VARIABLES ---
 # Source directory
-mrn_dir = r"E:\ApHCM_main\main_list_NOT_anonymised"
+mrn_dir = r"D:\ApHCM\ahcm_topup\original"
 
 # Destination directory (will create folder if it does not exist)
-anon_dir = r"E:\ApHCM_main\main_list"
+anon_dir = r"D:\ApHCM\ahcm_topup\ahcm_topup_anonymised"
 
 # CSV file with AnonID keys
-keys_df = pd.read_csv("keys/keys_ApHCM.csv", dtype=str)
+keys_df = pd.read_csv("keys/keys_aphcm_topup_posthoc.csv", dtype=str)
 
 # Name and path of metadata CSV
-extracted_metadata_path = "metadata/ApHCM_all.csv"
+extracted_metadata_path = "metadata/AHCM_topup.csv"
 
 # --- RUNNING CODE ---
 # IF NEEDED,
-zip_handler = ZipFolderHandler(mrn_dir, anon_dir)
-zip_handler.process_all_zipped_folders()
+# zip_handler = ZipFolderHandler(mrn_dir, anon_dir)
+# zip_handler.process_all_zipped_folders()
 
 # 1. Export metadata from DICOM files before anonymizing -------------------
 # Extract metadata
@@ -50,7 +50,7 @@ print(f"Metadata saved to {extracted_metadata_path}")
 anonymiser = Anonymisation()
 
 # Copy directory, uncomment if used zip class above and files are already copied
-# anonymiser.copy_directory(mrn_dir, anon_dir)
+anonymiser.copy_directory(mrn_dir, anon_dir)
 
 # Rename main folders
 anonymiser.rename_mainfolders(anon_dir, metadata_df)
